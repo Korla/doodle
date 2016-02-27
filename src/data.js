@@ -32,4 +32,6 @@ var r4 = {
   ]
 };
 
-export {rh, r6, r4};
+export default function data() {
+  return {rh, r6, r4};
+};

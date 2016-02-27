@@ -1,6 +1,7 @@
 import {addPos, rgbToHex} from './utils';
 
 export default function pointLines(points){
+  if(points.length == 0) return [];
   var length = 4;
   var corner = 0.7;
   var vert = points[0].rowHeight;

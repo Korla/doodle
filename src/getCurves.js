@@ -1,6 +1,7 @@
 import {addPos, rgbToHex, getKey} from './utils'
 
 export default function getCurves(points){
+  if(points.length == 0) return [];
   var corner = 4;
   var vectors = [[1,1], [1,-1], [-1,-1], [-1,1]];
   var squares = points
