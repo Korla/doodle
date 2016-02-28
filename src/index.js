@@ -11,17 +11,36 @@ import {makeDOMDriver, h, svg} from '@cycle/dom';
 
 function main(sources) {
   var pointClicks$ = sources.DOM.select('.point').events('click')
-    .map(event =>
-      event.target.attributes.data.value.split(',').map(intString => parseInt(intString, 10)
-    ));
-
-  var state$ = sources.data
-    .merge(pointClicks$)
-    .scan((state, point) => {
+    .map(event => event.target.attributes.data.value.split(',').map(intString => parseInt(intString, 10)))
+    .map(point => (state) => {
       var i = (point[1] - 1) * state.rowLength + point[0] - 1;
       state.points[i] = state.points[i] ? 0 : 1;
       return state;
     })
+  ;
+
+  var addColumnClick$ = sources.DOM.select('.addColumn').events('click')
+    .map(() => (state) => {
+      for(var i = state.rowLength; i <= state.points.length; i += state.rowLength + 1) {
+        state.points.splice(i, 0, 0);
+      }
+      state.rowLength += 1;
+      return state;
+    });
+
+  var addRowClick$ = sources.DOM.select('.addRow').events('click')
+    .map(() => (state) => {
+      for(var i = 0; i < state.rowLength; i ++) {
+        state.points.push(0);
+      }
+      return state;
+    });
+
+  var state$ = sources.data
+    .merge(pointClicks$)
+    .merge(addColumnClick$)
+    .merge(addRowClick$)
+    .scan((state, mapper) => mapper(state))
     .map(data => {
       var points = getData(data);
       var pointLines = getPointLines(points.filter(p => p.exists));
@@ -66,11 +85,18 @@ function main(sources) {
         )
       )
     ;
-    return svg(
-      'svg',
-      {class: 'container', attributes: { width: '400', height: '400', viewBox: '0 0 100 100' }},
-      lines.concat(circles)
-    );
+
+    return h('div', [
+      svg(
+        'svg',
+        {class: 'container', attributes: { width: '400', height: '400', viewBox: '0 0 100 100' }},
+        lines.concat(circles)
+      ),
+      h('div', [
+        h('button', {className: 'addColumn'}, 'Add column'),
+        h('button', {className: 'addRow'}, 'Add row')
+      ])
+    ]);
   })
 
   return {
