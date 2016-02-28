@@ -2,8 +2,8 @@ import getData from './getData';
 import getPointLines from './getPointLines';
 import getCrossLines from './getCrossLines';
 import getCurves from './getCurves';
-import {drawPointsDriver, drawLinesDriver} from './d3Drivers';
 import makeDataDriver from './dataDriver';
+import {addPos, rgbToHex, getKey} from './utils';
 
 import Rx from 'rx';
 import Cycle from '@cycle/core';
@@ -22,9 +22,6 @@ function main(sources) {
       state.points[i] = state.points[i] ? 0 : 1;
       return state;
     })
-  ;
-
-  var data$ = state$
     .map(data => {
       var points = getData(data);
       var pointLines = getPointLines(points.filter(p => p.exists));
@@ -37,24 +34,53 @@ function main(sources) {
     })
   ;
 
-  let container$ = sources.DOM.select('.container').observable.map(elem => elem[0]);
+  var view$ = state$.map(state => {
+    var circles = state.points.map(p =>
+      svg(
+        'circle',
+        {
+          'cx': p.pos[0],
+          'cy': p.pos[1],
+          'r': 1,
+          'class': 'point',
+          'stroke-width': 3,
+          'stroke': 'transparent',
+          //'fill': rgbToHex(255, p.pos[0]*2.55, p.pos[1]*2.55),
+          'fill': 'none',
+          'attributes': {
+            'data': p.coords.join(',')
+          },
+        }
+      )
+    );
+    var lines = state.lines
+      .map(l => svg(
+          'path',
+          {
+            'stroke-width': 0.4,
+            'stroke': 'red',
+            'fill': 'none',
+            'stroke': l.col,
+            'd': 'M' + l.positions.map(pos => `${pos[0]} ${pos[1]} `) + 'Z'
+          }
+        )
+      )
+    ;
+    return svg(
+      'svg',
+      {class: 'container', attributes: { width: '400', height: '400', viewBox: '0 0 100 100' }},
+      lines.concat(circles)
+    );
+  })
 
   return {
-    DOM: state$.map(state => svg('svg', {class: 'container', attributes: { width: '400', height: '400', viewBox: '0 0 100 100' }})),
-    lines: Rx.Observable.combineLatest(
-      container$, data$.map(data => data.lines),
-      (container, data) => ({container, data})),
-    points: Rx.Observable.combineLatest(
-      container$, data$.map(data => data.points),
-      (container, data) => ({container, data})),
+    DOM: view$
   };
 }
 
 const drivers = {
   DOM: makeDOMDriver('body'),
   data: makeDataDriver('r6'),
-  lines: drawLinesDriver(),
-  points: drawPointsDriver(),
 };
 
 Cycle.run(main, drivers);
