@@ -12,7 +12,7 @@ import {makeDOMDriver, h, svg} from '@cycle/dom';
 function main(sources) {
   var pointClicks$ = sources.DOM.select('.point').events('click')
     .map(event => event.target.attributes.data.value.split(',').map(intString => parseInt(intString, 10)))
-    .map(point => (state) => {
+    .map(point => state => {
       var i = (point[1] - 1) * state.rowLength + point[0] - 1;
       state.points[i] = state.points[i] ? 0 : 1;
       return state;
@@ -20,7 +20,7 @@ function main(sources) {
   ;
 
   var addColumnClick$ = sources.DOM.select('.addColumn').events('click')
-    .map(() => (state) => {
+    .map(() => state => {
       for(var i = state.rowLength; i <= state.points.length; i += state.rowLength + 1) {
         state.points.splice(i, 0, 0);
       }
@@ -29,24 +29,48 @@ function main(sources) {
     });
 
   var addRowClick$ = sources.DOM.select('.addRow').events('click')
-    .map(() => (state) => {
+    .map(() => state => {
       for(var i = 0; i < state.rowLength; i ++) {
         state.points.push(0);
       }
       return state;
     });
 
-  var state$ = sources.data
+  var hexagonScale$ = sources.DOM.select('.hexagonScale').events('input')
+    .map(e => e.target.value)
+    .startWith(0.7)
+    .map(value => state => {
+      state.hexagonScale = value;
+      return state;
+    });
+
+  var cornerScale$ = sources.DOM.select('.cornerScale').events('input')
+    .map(e => e.target.value)
+    .startWith(0.5)
+    .map(value => state => {
+      state.cornerScale = value;
+      return state;
+    });
+
+  var state$ = sources.data.map(data => {
+      data.hexagonScale = 0.5;
+      data.cornerScale = 0.7;
+      return data;
+    })
     .merge(pointClicks$)
     .merge(addColumnClick$)
     .merge(addRowClick$)
+    .merge(hexagonScale$)
+    .merge(cornerScale$)
     .scan((state, mapper) => mapper(state))
     .map(data => {
       var points = getData(data);
-      var pointLines = getPointLines(points.filter(p => p.exists));
+      var pointLines = getPointLines(points.filter(p => p.exists), data.hexagonScale, data.cornerScale);
       var crossLines = getCrossLines(points.filter(p => !p.exists));
       var curves = getCurves(points.filter(p => p.exists));
       return {
+        hexagonScale: data.hexagonScale,
+        cornerScale: data.cornerScale,
         points,
         lines: pointLines.concat(crossLines).concat(curves)
       }
@@ -94,7 +118,15 @@ function main(sources) {
       ),
       h('div', [
         h('button', {className: 'addColumn'}, 'Add column'),
-        h('button', {className: 'addRow'}, 'Add row')
+        h('button', {className: 'addRow'}, 'Add row'),
+        h('div', [
+          'Hexagon scale',
+          h('input', {className: 'hexagonScale', value: state.hexagonScale, type: 'range', min: 0, max: 1, step: 0.01}, 'Add row'),
+        ]),
+        h('div', [
+          'Corner scale',
+          h('input', {className: 'cornerScale', value: state.cornerScale, type: 'range', min: 0, max: 1, step: 0.01}, 'Add row'),
+        ])
       ])
     ]);
   })
