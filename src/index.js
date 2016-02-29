@@ -10,16 +10,17 @@ import Cycle from '@cycle/core';
 import {makeDOMDriver, h, svg} from '@cycle/dom';
 
 function main(sources) {
-  var pointClicks$ = sources.DOM.select('.point').events('click')
+  var click = (selector) => sources.DOM.select(selector).events('click');
+
+  var point$ = click('.point')
     .map(event => event.target.attributes.data.value.split(',').map(intString => parseInt(intString, 10)))
     .map(point => state => {
       var i = (point[1] - 1) * state.rowLength + point[0] - 1;
       state.points[i] = state.points[i] ? 0 : 1;
       return state;
-    })
-  ;
+    });
 
-  var addColumnClick$ = sources.DOM.select('.addColumn').events('click')
+  var addColumn$ = click('.addColumn')
     .map(() => state => {
       for(var i = state.rowLength; i <= state.points.length; i += state.rowLength + 1) {
         state.points.splice(i, 0, 0);
@@ -28,13 +29,30 @@ function main(sources) {
       return state;
     });
 
-  var addRowClick$ = sources.DOM.select('.addRow').events('click')
+  var addRow$ = click('.addRow')
     .map(() => state => {
       for(var i = 0; i < state.rowLength; i ++) {
         state.points.push(0);
       }
       return state;
     });
+
+  var allOn$ = click('.allOn').map(() => 1);
+  var allOff$ = click('.allOff').map(() => 0);
+  var toggle$ = allOn$.merge(allOff$)
+    .map(value => state => {
+      state.points = state.points.map(p => value);
+      return state;
+    });
+
+  var random$ = click('.random')
+    .map(value => state => {
+      var i = Math.floor(Math.random() * state.points.length);
+      state.points[i] = state.points[i] ? 0 : 1;
+      return state;
+    });
+
+  var clicks$ = Rx.Observable.merge(point$, addColumn$, addRow$, toggle$, random$);
 
   var hexagonScale$ = sources.DOM.select('.hexagonScale').events('input')
     .map(e => e.target.value)
@@ -51,17 +69,16 @@ function main(sources) {
       state.cornerScale = value;
       return state;
     });
+  var variables$ = Rx.Observable.merge(hexagonScale$, cornerScale$);
 
-  var state$ = sources.data.map(data => {
+  var state$ = sources.data
+    .map(data => {
       data.hexagonScale = 0.5;
       data.cornerScale = 0.7;
       return data;
     })
-    .merge(pointClicks$)
-    .merge(addColumnClick$)
-    .merge(addRowClick$)
-    .merge(hexagonScale$)
-    .merge(cornerScale$)
+    .merge(clicks$)
+    .merge(variables$)
     .scan((state, mapper) => mapper(state))
     .map(data => {
       var points = getData(data);
@@ -72,7 +89,9 @@ function main(sources) {
         hexagonScale: data.hexagonScale,
         cornerScale: data.cornerScale,
         points,
-        lines: pointLines.concat(crossLines).concat(curves)
+        lines: pointLines
+          .concat(crossLines)
+          .concat(curves)
       }
     })
   ;
@@ -117,8 +136,13 @@ function main(sources) {
         lines.concat(circles)
       ),
       h('div', [
-        h('button', {className: 'addColumn'}, 'Add column'),
-        h('button', {className: 'addRow'}, 'Add row'),
+        h('div', [
+          h('button', {className: 'addColumn'}, 'Add column'),
+          h('button', {className: 'addRow'}, 'Add row'),
+          h('button', {className: 'allOn'}, 'All on'),
+          h('button', {className: 'allOff'}, 'All off'),
+          h('button', {className: 'random'}, 'Random'),
+        ]),
         h('div', [
           'Hexagon scale',
           h('input', {className: 'hexagonScale', value: state.hexagonScale, type: 'range', min: 0, max: 1, step: 0.01}, 'Add row'),
