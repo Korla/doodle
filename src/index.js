@@ -10,7 +10,7 @@ import Cycle from '@cycle/core';
 import {makeDOMDriver, h, svg} from '@cycle/dom';
 
 function main(sources) {
-  var click = (selector) => sources.DOM.select(selector).events('click');
+  var click = selector => sources.DOM.select(selector).events('click');
 
   var point$ = click('.point')
     .map(event => event.target.attributes.data.value.split(',').map(intString => parseInt(intString, 10)))
@@ -52,7 +52,13 @@ function main(sources) {
       return state;
     });
 
-  var clicks$ = Rx.Observable.merge(point$, addColumn$, addRow$, toggle$, random$);
+  var allRandom$ = click('.allRandom')
+    .map(value => state => {
+      state.points = state.points.map(p => Math.floor(Math.random() * 2));
+      return state;
+    });
+
+  var clicks$ = Rx.Observable.merge(point$, addColumn$, addRow$, toggle$, random$, allRandom$);
 
   var hexagonScale$ = sources.DOM.select('.hexagonScale').events('input')
     .map(e => e.target.value)
@@ -84,7 +90,7 @@ function main(sources) {
       var points = getData(data);
       var pointLines = getPointLines(points.filter(p => p.exists), data.hexagonScale, data.cornerScale);
       var crossLines = getCrossLines(points.filter(p => !p.exists));
-      var curves = getCurves(points.filter(p => p.exists), data.hexagonScale);
+      var curves = getCurves(points.filter(p => p.exists), data.hexagonScale, data.cornerScale);
       return {
         hexagonScale: data.hexagonScale,
         cornerScale: data.cornerScale,
@@ -141,6 +147,7 @@ function main(sources) {
           h('button', {className: 'addRow'}, 'Add row'),
           h('button', {className: 'allOn'}, 'All on'),
           h('button', {className: 'allOff'}, 'All off'),
+          h('button', {className: 'allRandom'}, 'All random'),
           h('button', {className: 'random'}, 'Random'),
         ]),
         h('div', [

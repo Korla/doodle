@@ -1,13 +1,14 @@
 import {addPos, rgbToHex, getKey} from './utils'
 
-export default function getCurves(points, hexagonScale){
+export default function getCurves(points, hexagonScale, cornerScale){
   if(points.length == 0) return [];
   var maxHor = points[0].colWidth * 4;
-  var maxVert = points[0].rowHeight* 4;
+  var maxVert = points[0].rowHeight * 4;
+  var scale = hexagonScale * cornerScale;
   var vectors = [[1,1], [1,-1], [-1,-1], [-1,1]]
     .map(v => ({
       key: v,
-      deltaPos: [v[0]*maxHor*hexagonScale, v[1]*maxVert*hexagonScale]
+      deltaPos: [v[0]*maxHor*scale, v[1]*maxVert*scale]
     }));
 
   var squares = points
