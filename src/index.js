@@ -60,16 +60,34 @@ function main(sources) {
 
   var clicks$ = Rx.Observable.merge(point$, addColumn$, addRow$, toggle$, random$, allRandom$);
 
-  var hexagonScale$ = sources.DOM.select('.hexagonScale').events('input')
-    .map(e => e.target.value)
+  var hexagonScaleClick$ = sources.DOM.select('.hexagonScale').events('input')
+    .map(e => e.target.value);
+  var pulsateHexagonScale$ = sources.DOM.select('.pulsateHexagonScale').events('change')
+    .map(e => e.target.checked)
+    .startWith(false)
+    .combineLatest(Rx.Observable.interval(50))
+    .map(values => values[0])
+    .filter(v => v)
+    .map((a,i) => (Math.sin(i / 40) + 1)/2)
+  ;
+  var hexagonScale$ = Rx.Observable.merge(hexagonScaleClick$, pulsateHexagonScale$)
     .startWith(0.7)
     .map(value => state => {
       state.hexagonScale = value;
       return state;
     });
 
-  var cornerScale$ = sources.DOM.select('.cornerScale').events('input')
-    .map(e => e.target.value)
+  var cornerScaleClick$ = sources.DOM.select('.cornerScale').events('input')
+    .map(e => e.target.value);
+  var pulsateCornerScale$ = sources.DOM.select('.pulsateCornerScale').events('change')
+    .map(e => e.target.checked)
+    .startWith(false)
+    .combineLatest(Rx.Observable.interval(50))
+    .map(values => values[0])
+    .filter(v => v)
+    .map((a,i) => (Math.sin(i / 40) + 1)/2)
+  ;
+  var cornerScale$ = Rx.Observable.merge(cornerScaleClick$, pulsateCornerScale$)
     .startWith(0.5)
     .map(value => state => {
       state.cornerScale = value;
@@ -153,11 +171,19 @@ function main(sources) {
         h('div', [
           'Hexagon scale',
           h('input', {className: 'hexagonScale', value: state.hexagonScale, type: 'range', min: 0, max: 1, step: 0.01}, 'Add row'),
+          h('label', [
+            'Pulsate',
+            h('input', {className: 'pulsateHexagonScale', value: state.pulsateHexagonScale, type: 'checkbox'}),
+          ]),
         ]),
         h('div', [
           'Corner scale',
           h('input', {className: 'cornerScale', value: state.cornerScale, type: 'range', min: 0, max: 1, step: 0.01}, 'Add row'),
-        ])
+          h('label', [
+            'Pulsate',
+            h('input', {className: 'pulsateCornerScale', value: state.pulsateCornerScale, type: 'checkbox'}),
+          ]),
+        ]),
       ])
     ]);
   })
