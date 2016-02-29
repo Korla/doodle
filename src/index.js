@@ -84,7 +84,7 @@ function main(sources) {
       var points = getData(data);
       var pointLines = getPointLines(points.filter(p => p.exists), data.hexagonScale, data.cornerScale);
       var crossLines = getCrossLines(points.filter(p => !p.exists));
-      var curves = getCurves(points.filter(p => p.exists));
+      var curves = getCurves(points.filter(p => p.exists), data.hexagonScale);
       return {
         hexagonScale: data.hexagonScale,
         cornerScale: data.cornerScale,
