@@ -112,52 +112,65 @@ function main(sources) {
       return {
         hexagonScale: data.hexagonScale,
         cornerScale: data.cornerScale,
-        points,
-        lines: pointLines
-          .concat(crossLines)
-          .concat(curves)
+        points: points,
+        lines: pointLines.concat(crossLines),
+        curves: curves
       }
     })
   ;
 
   var view$ = state$.map(state => {
-    var circles = state.points.map(p =>
-      svg(
-        'circle',
-        {
-          'cx': p.pos[0],
-          'cy': p.pos[1],
-          'r': 1,
-          'class': 'point',
-          'stroke-width': 3,
-          'stroke': 'transparent',
-          //'fill': rgbToHex(255, p.pos[0]*2.55, p.pos[1]*2.55),
-          'fill': 'none',
-          'attributes': {
-            'data': p.coords.join(',')
-          },
-        }
-      )
-    );
+    var circles = state.points
+      .map(p =>
+        svg(
+          'circle',
+          {
+            'cx': p.pos[0],
+            'cy': p.pos[1],
+            'r': 1,
+            'class': 'point',
+            'stroke-width': 3,
+            'stroke': 'transparent',
+            'fill': 'none',
+            'attributes': {
+              'data': p.coords.join(',')
+            },
+          }
+        )
+      );
     var lines = state.lines
       .map(l => svg(
           'path',
           {
             'stroke-width': 0.4,
-            'stroke': 'red',
-            'fill': 'none',
+            'fill': 'white',
             'stroke': l.col,
-            'd': 'M' + l.positions.map(pos => `${pos[0]} ${pos[1]} `) + 'Z'
+            'd': `M${l.positions.map(pos => `${pos[0]} ${pos[1]} `)}Z`
           }
         )
-      )
-    ;
+      );
+    var curves = state.curves
+      .map(c => ({
+        col: c.col,
+        pos: c.positions.map(pos => `${pos[0]} ${pos[1]} `)
+      }))
+      .map(c =>
+        svg(
+          'path',
+          {
+            'stroke-width': 0.4,
+            'fill': 'none',
+            'stroke': c.col,
+            'd': `M ${c.pos[0]} Q ${c.pos[1]} , ${c.pos[2]}`
+          }
+        )
+      );
 
     return h('div', [
       svg(
         'svg',
         {class: 'container', attributes: { width: '400', height: '400', viewBox: '0 0 100 100' }},
-        lines.concat(circles)
+        curves.concat(lines).concat(circles)
       ),
       h('div', [
         h('div', [

@@ -3,11 +3,11 @@ export function addPos(p1, p2) {
 }
 
 export function getKey(pos, vector) {
-  return pos.map((p,i) => p + vector[i]/ 2).join();
+  return pos.map((p,i) => p + vector[i]).join();
 }
 
 export function rgbToHex(r, g, b) {
-  return "#" + colToHex(r) + colToHex(g) + colToHex(b);
+  return "#" + colToHex(b) + colToHex(g) + colToHex(r);
 }
 
 export function colToHex(c) {
