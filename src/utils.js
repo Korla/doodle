@@ -7,7 +7,7 @@ export function getKey(pos, vector) {
 }
 
 export function rgbToHex(r, g, b) {
-  return "#" + colToHex(b) + colToHex(g) + colToHex(r);
+  return "#" + colToHex(r) + colToHex(g) + colToHex(b);
 }
 
 export function colToHex(c) {

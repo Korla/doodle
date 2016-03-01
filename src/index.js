@@ -169,7 +169,7 @@ function main(sources) {
     return h('div', [
       svg(
         'svg',
-        {class: 'container', attributes: { width: '400', height: '400', viewBox: '0 0 100 100' }},
+        {class: 'container', attributes: { width: '600', height: '600', viewBox: '0 0 100 100' }},
         curves.concat(lines).concat(circles)
       ),
       h('div', [
